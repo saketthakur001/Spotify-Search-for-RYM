@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RateYourMusic Spotify Track ID Fetcher with Search
 // @namespace    http://tampermonkey.net/
-// @version      4.0
+// @version      4.1
 // @description  Fetch Spotify track IDs, search for missing tracks, and display progress
 // @author       Saket
 // @match        https://rateyourmusic.com/charts/*
@@ -12,13 +12,12 @@
 // @connect      accounts.spotify.com
 // @connect      api.spotify.com
 // ==/UserScript==
-
-(function() { 
+(async function() {
     'use strict';
 
-    const clientId = 'YOUR CLIENT ID';
-    const clientSecret = 'YOUR CLIENT SECRET';
 
+    const clientId = 'CLIENT ID';
+    const clientSecret = 'YOUR SECRET KEY';
 
     async function getAccessToken() {
         const tokenUrl = 'https://accounts.spotify.com/api/token';
@@ -77,7 +76,7 @@
     }
 
     async function extractTrackIDs() {
-        let trackData = '';
+        let trackData = new Set();
         let failedSongs = '';
         const items = document.querySelectorAll('.page_charts_section_charts_item');
         const totalItems = items.length;
@@ -89,7 +88,7 @@
             processedItems++;
             const titleElement = item.querySelector('.page_charts_section_charts_item_title a.song');
             const artistElement = item.querySelector('.page_charts_section_charts_item_credited_links_primary a.artist');
-            
+
             if (!titleElement || !artistElement) continue;
 
             const title = titleElement.textContent.trim();
@@ -119,14 +118,14 @@
             }
 
             if (spotifyUrl) {
-                trackData += `${spotifyUrl}\n`;
+                trackData.add(spotifyUrl); // Add URL to Set
             } else {
                 failedSongs += `${songInfo}\n`;
             }
         }
 
         updateProgress(100, 'Completed', failedSongs);
-        return trackData;
+        return Array.from(trackData).join('\n'); // Convert Set to string
     }
 
     function updateProgress(percentage, currentSong, failedSongs) {
@@ -213,3 +212,4 @@
     let previousUrl = location.href;
     observer.observe(document, { subtree: true, childList: true });
 })();
+
